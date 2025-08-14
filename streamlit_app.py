@@ -431,9 +431,118 @@ def render_final_screen(display_type: str, rec_df: pd.DataFrame):
     st.markdown(cards_html, unsafe_allow_html=True)
 
 # =================================
-# 메인 화면 (이미지처럼) 
+# 수정된 CSS - 숨겨진 버튼 완전히 숨기기
+# =================================
+st.markdown("""
+<style>
+    /* 전체 앱 스타일 */
+    .stApp {
+        background-color: #f8f9fa;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    /* 메인 컨테이너 */
+    .main-container {
+        background: #f8f9fa;
+        padding: 20px;
+        margin: 0 auto;
+        max-width: 350px;
+    }
+    
+    /* KB 로고 및 헤더 */
+    .kb-header {
+        text-align: center;
+        margin-bottom: 40px;
+        background: white;
+        padding: 25px 20px;
+        border-radius: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .kb-logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        gap: 10px;
+    }
+    
+    .kb-star {
+        color: #FFB800;
+        font-size: 32px;
+        font-weight: bold;
+    }
+    
+    .kb-text {
+        color: #666;
+        font-size: 32px;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    
+    .elderly-icons {
+        font-size: 40px;
+    }
+    
+    .main-title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-top: 10px;
+    }
+    
+    /* 숨겨진 버튼들 완전히 숨기기 */
+    button[data-testid="baseButton-secondary"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+    
+    /* 커스텀 버튼 호버 효과 */
+    .custom-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    
+    .custom-button:active {
+        transform: translateY(0px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* 모바일 최적화 */
+    @media (max-width: 400px) {
+        .main-container {
+            padding: 15px;
+        }
+        
+        .kb-star, .kb-text {
+            font-size: 28px;
+        }
+        
+        .main-title {
+            font-size: 20px;
+        }
+        
+        .custom-button {
+            font-size: 18px !important;
+            padding: 20px 15px !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# =================================
+# 수정된 메인 화면 함수
 # =================================
 def render_main_home():
+    # 메인 컨테이너
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
     # KB 헤더
@@ -448,9 +557,9 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    # 직접 HTML 버튼으로 구현
+    # 미수령 버튼
     st.markdown("""
-    <div onclick="document.getElementById('not_receiving_hidden').click()" 
+    <div class="custom-button" onclick="document.getElementById('not_receiving_hidden').click()" 
          style="background: #FFE4B5; color: #8B4513; padding: 25px 20px; margin: 15px 0; 
                 border-radius: 20px; text-align: center; font-size: 20px; font-weight: bold; 
                 cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
@@ -460,15 +569,9 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    # 숨겨진 실제 버튼
-    if st.button("", key="not_receiving_hidden", help="미수령"):
-        st.session_state.flow = "survey"
-        st.session_state.survey_type = "not_receiving"
-        st.rerun()
-    
     # 수령 중 버튼
     st.markdown("""
-    <div onclick="document.getElementById('receiving_hidden').click()" 
+    <div class="custom-button" onclick="document.getElementById('receiving_hidden').click()" 
          style="background: #B8D4F0; color: #2C5282; padding: 25px 20px; margin: 15px 0 25px 0; 
                 border-radius: 20px; text-align: center; font-size: 20px; font-weight: bold; 
                 cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
@@ -478,47 +581,56 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    if st.button("", key="receiving_hidden", help="수령중"):
-        st.session_state.flow = "survey"
-        st.session_state.survey_type = "receiving"
-        st.rerun()
+    # 하단 버튼들을 위한 컨테이너
+    st.markdown('<div style="display: flex; gap: 15px;">', unsafe_allow_html=True)
     
-    # 하단 버튼들
-    col1, col2 = st.columns(2)
+    # 상품 정보 버튼
+    st.markdown("""
+    <div class="custom-button" onclick="document.getElementById('product_hidden').click()" 
+         style="background: #C6F6D5; color: #22543D; padding: 20px 15px; margin: 15px 0; 
+                border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
+                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
+                transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
+                justify-content: center; white-space: pre-line; flex: 1;">
+        상품<br>정보
+    </div>
+    """, unsafe_allow_html=True)
     
-    with col1:
-        st.markdown("""
-        <div onclick="document.getElementById('product_hidden').click()" 
-             style="background: #C6F6D5; color: #22543D; padding: 20px 15px; margin: 15px 0; 
-                    border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
-                    cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-                    transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
-                    justify-content: center; white-space: pre-line;">
-            상품<br>정보
-        </div>
-        """, unsafe_allow_html=True)
+    # 전화 상담 버튼
+    st.markdown("""
+    <div class="custom-button" onclick="document.getElementById('consultation_hidden').click()" 
+         style="background: #FED7E2; color: #97266D; padding: 20px 15px; margin: 15px 0; 
+                border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
+                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
+                transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
+                justify-content: center; white-space: pre-line; flex: 1;">
+        전화<br>상담
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)  # 하단 버튼 컨테이너 끝
+    
+    st.markdown('</div>', unsafe_allow_html=True)  # main-container 끝
+    
+    # 숨겨진 실제 버튼들 (화면에 보이지 않음)
+    with st.container():
+        if st.button("", key="not_receiving_hidden"):
+            st.session_state.flow = "survey"
+            st.session_state.survey_type = "not_receiving"
+            st.rerun()
         
-        if st.button("", key="product_hidden", help="상품정보"):
+        if st.button("", key="receiving_hidden"):
+            st.session_state.flow = "survey"
+            st.session_state.survey_type = "receiving"
+            st.rerun()
+        
+        if st.button("", key="product_hidden"):
             st.session_state.flow = "product_info"
             st.rerun()
-    
-    with col2:
-        st.markdown("""
-        <div onclick="document.getElementById('consultation_hidden').click()" 
-             style="background: #FED7E2; color: #97266D; padding: 20px 15px; margin: 15px 0; 
-                    border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
-                    cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-                    transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
-                    justify-content: center; white-space: pre-line;">
-            전화<br>상담
-        </div>
-        """, unsafe_allow_html=True)
         
-        if st.button("", key="consultation_hidden", help="전화상담"):
+        if st.button("", key="consultation_hidden"):
             st.session_state.flow = "consultation"
             st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # 공통 설문 문항
 QUESTIONS = [
