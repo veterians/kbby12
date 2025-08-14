@@ -515,18 +515,18 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
     }
     
-    /* 미수령 버튼 스타일 */
+    /* 미수령 버튼 스타일 - 붉은색 */
     div[data-testid="column"]:first-child .stButton > button,
     [data-testid="stVerticalBlock"] > div:nth-child(2) .stButton > button {
-        background: #FFE4B5 !important;
-        color: #8B4513 !important;
+        background: #FED7D7 !important;
+        color: #C53030 !important;
     }
     
-    /* 수령 중 버튼 스타일 */
+    /* 수령 중 버튼 스타일 - 초록색 */
     div[data-testid="column"]:nth-child(2) .stButton > button,
     [data-testid="stVerticalBlock"] > div:nth-child(3) .stButton > button {
-        background: #B8D4F0 !important;
-        color: #2C5282 !important;
+        background: #C6F6D5 !important;
+        color: #22543D !important;
         margin-bottom: 25px !important;
     }
     
@@ -538,10 +538,10 @@ st.markdown("""
         padding: 20px 15px !important;
     }
     
-    /* 상품 정보 버튼 */
+    /* 상품 정보 버튼 - 파란색 */
     div[data-testid="column"]:nth-child(3) .stButton > button {
-        background: #C6F6D5 !important;
-        color: #22543D !important;
+        background: #BEE3F8 !important;
+        color: #2C5282 !important;
     }
     
     /* 전화 상담 버튼 */
@@ -641,54 +641,6 @@ def render_main_home():
     
     st.markdown('</div>', unsafe_allow_html=True)
 
-# =================================
-# 대안: 더 간단한 직접 처리 방식
-# =================================
-def render_main_home_simple():
-    # CSS는 동일
-    st.markdown("""<style>/* 위의 CSS 동일 */</style>""", unsafe_allow_html=True)
-    
-    # 메인 컨테이너
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
-    
-    # KB 헤더
-    st.markdown("""
-    <div class="kb-header">
-        <div class="kb-logo">
-            <span class="kb-star">★</span>
-            <span class="kb-text">KB</span>
-            <span class="elderly-icons">👴👵</span>
-        </div>
-        <div class="main-title">시니어 연금 계획기</div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 미수령 버튼 - 즉시 처리
-    if st.button("현재 연금\n미수령 중", key="not_receiving_direct", use_container_width=True):
-        st.session_state.flow = "survey"
-        st.session_state.survey_type = "not_receiving"
-        st.rerun()
-    
-    # 수령 중 버튼 - 즉시 처리
-    if st.button("현재 연금\n수령 중", key="receiving_direct", use_container_width=True):
-        st.session_state.flow = "survey" 
-        st.session_state.survey_type = "receiving"
-        st.rerun()
-    
-    # 하단 버튼들
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("상품\n정보", key="product_direct", use_container_width=True):
-            st.session_state.flow = "product_info"
-            st.rerun()
-    
-    with col2:
-        if st.button("전화\n상담", key="consultation_direct", use_container_width=True):
-            st.session_state.flow = "consultation"
-            st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # 공통 설문 문항
 QUESTIONS = [
