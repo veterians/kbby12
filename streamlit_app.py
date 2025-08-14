@@ -580,7 +580,7 @@ def render_main_home():
     <div class="kb-header">
         <div class="kb-logo">
             <span class="kb-star">★</span>
-            <span class="kb-text">b KB</span>
+            <span class="kb-text">KB</span>
             <span class="elderly-icons">👴👵</span>
         </div>
         <div class="main-title">시니어 연금 계산기</div>
@@ -714,7 +714,6 @@ def map_survey_to_model_input(r):
 # =================================
 # UI 플로우
 # =================================
-st.title("💬 KB 시니어 연금 계산기")
 
 ss = st.session_state
 ss.setdefault("flow", "main")          # ← 기존 'choose' 대신 'main'으로 시작
