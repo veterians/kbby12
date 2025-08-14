@@ -430,23 +430,21 @@ def render_final_screen(display_type: str, rec_df: pd.DataFrame):
     cards_html = '<div class="cards">' + ''.join(cards) + '</div>'
     st.markdown(cards_html, unsafe_allow_html=True)
 
-
 # =================================
-# 개선된 CSS 스타일
+# 수정된 CSS - 더 강력한 선택자 사용
 # =================================
 st.markdown("""
 <style>
     /* 전체 앱 스타일 */
     .stApp {
-        background-color: #f8f9fa;
-        max-width: 400px;
-        margin: 0 auto;
+        background-color: #f8f9fa !important;
+        max-width: 400px !important;
+        margin: 0 auto !important;
     }
     
     /* Streamlit 기본 요소들 숨기기 */
     .stDeployButton {display: none;}
     footer {visibility: hidden;}
-    .stActionButton {display: none;}
     header {visibility: hidden;}
     
     /* 메인 컨테이너 */
@@ -500,6 +498,8 @@ st.markdown("""
     }
     
     /* 모든 버튼 기본 스타일 */
+    .element-container .stButton > button,
+    div[data-testid="element-container"] .stButton > button,
     .stButton > button {
         width: 100% !important;
         border: none !important;
@@ -515,7 +515,6 @@ st.markdown("""
         margin: 15px 0 !important;
         white-space: pre-line !important;
         height: 80px !important;
-        color: #333 !important;
     }
     
     .stButton > button:hover {
@@ -523,32 +522,30 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
     }
     
-    /* 특정 버튼별 스타일 - key 기반으로 더 구체적으로 지정 */
+    /* 순서 기반 버튼 스타일링 - 더 구체적한 선택자 */
     
-    /* 미수령 버튼 (주황색 계열) */
-    button[key="not_receiving_main"] {
+    /* 첫 번째 버튼 - 미수령 (주황색) */
+    .main-container > div:nth-of-type(2) .stButton > button {
         background: linear-gradient(135deg, #FFE4B5, #FFDAB9) !important;
         color: #8B4513 !important;
         border: 2px solid #DEB887 !important;
     }
     
-    button[key="not_receiving_main"]:hover {
-        background: linear-gradient(135deg, #FFDAB9, #FFE4B5) !important;
-    }
-    
-    /* 수령 중 버튼 (파란색 계열) */
-    button[key="receiving_main"] {
+    /* 두 번째 버튼 - 수령 중 (파란색) */
+    .main-container > div:nth-of-type(3) .stButton > button {
         background: linear-gradient(135deg, #B8D4F0, #ADD8E6) !important;
         color: #2C5282 !important;
         border: 2px solid #87CEEB !important;
     }
     
-    button[key="receiving_main"]:hover {
-        background: linear-gradient(135deg, #ADD8E6, #B8D4F0) !important;
+    /* 하단 버튼들 컨테이너 */
+    .main-container > div:nth-of-type(4) {
+        display: flex;
+        gap: 10px;
     }
     
-    /* 상품 정보 버튼 (녹색 계열) */
-    button[key="product_main"] {
+    /* 상품 정보 버튼 (왼쪽) */
+    .main-container > div:nth-of-type(4) > div:first-child .stButton > button {
         background: linear-gradient(135deg, #C6F6D5, #B0E7C3) !important;
         color: #22543D !important;
         height: 60px !important;
@@ -557,12 +554,8 @@ st.markdown("""
         border: 2px solid #9AE6B4 !important;
     }
     
-    button[key="product_main"]:hover {
-        background: linear-gradient(135deg, #B0E7C3, #C6F6D5) !important;
-    }
-    
-    /* 전화 상담 버튼 (분홍색 계열) */
-    button[key="consultation_main"] {
+    /* 전화 상담 버튼 (오른쪽) */
+    .main-container > div:nth-of-type(4) > div:last-child .stButton > button {
         background: linear-gradient(135deg, #FED7E2, #FBB6CE) !important;
         color: #97266D !important;
         height: 60px !important;
@@ -571,23 +564,22 @@ st.markdown("""
         border: 2px solid #F687B3 !important;
     }
     
-    button[key="consultation_main"]:hover {
-        background: linear-gradient(135deg, #FBB6CE, #FED7E2) !important;
-    }
-    
-    /* Streamlit의 버튼 컨테이너별 스타일링 (추가 방법) */
+    /* 컬럼 내부 버튼 스타일 */
     div[data-testid="column"] .stButton > button {
         height: 60px !important;
         font-size: 16px !important;
         padding: 20px 15px !important;
     }
     
-    /* 첫 번째와 두 번째 버튼 (큰 버튼들) */
-    .main-container > div:nth-child(3) .stButton > button,
-    .main-container > div:nth-child(4) .stButton > button {
-        height: 80px !important;
-        font-size: 20px !important;
-        margin-bottom: 25px !important;
+    /* 추가적인 강제 스타일링 */
+    .stApp [data-testid="stVerticalBlock"] > div:nth-child(2) .stButton > button {
+        background: #FFE4B5 !important;
+        color: #8B4513 !important;
+    }
+    
+    .stApp [data-testid="stVerticalBlock"] > div:nth-child(3) .stButton > button {
+        background: #B8D4F0 !important;
+        color: #2C5282 !important;
     }
     
     /* 모바일 최적화 */
@@ -608,39 +600,6 @@ st.markdown("""
         .main-title {
             font-size: 20px;
         }
-    }
-    
-    /* 대체 스타일링 방법 - 인라인 스타일 적용 */
-    .custom-button-orange {
-        background: linear-gradient(135deg, #FFE4B5, #FFDAB9) !important;
-        color: #8B4513 !important;
-        border: 2px solid #DEB887 !important;
-        border-radius: 20px;
-        padding: 25px 20px;
-        font-size: 20px;
-        font-weight: bold;
-        width: 100%;
-        height: 80px;
-        margin: 15px 0;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-    
-    .custom-button-blue {
-        background: linear-gradient(135deg, #B8D4F0, #ADD8E6) !important;
-        color: #2C5282 !important;
-        border: 2px solid #87CEEB !important;
-        border-radius: 20px;
-        padding: 25px 20px;
-        font-size: 20px;
-        font-weight: bold;
-        width: 100%;
-        height: 80px;
-        margin: 15px 0;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -694,60 +653,26 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    # 대체 방법: HTML 버튼 사용
-    st.markdown("""
-    <div onclick="document.querySelector('button[key=not_receiving_main]').click();" 
-         class="custom-button-orange" 
-         style="text-align: center; display: flex; align-items: center; justify-content: center;">
-        현재 연금<br>미수령 중
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 숨겨진 실제 Streamlit 버튼
-    if st.button("현재 연금\n미수령 중", key="not_receiving_main", type="primary"):
+    # 미수령 버튼
+    if st.button("현재 연금\n미수령 중", key="not_receiving_main", use_container_width=True):
         st.session_state.button_clicked = "not_receiving"
         st.rerun()
     
-    # CSS로 숨기기
-    st.markdown("""
-    <style>
-    button[key="not_receiving_main"] {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # 두 번째 버튼도 동일하게
-    st.markdown("""
-    <div onclick="document.querySelector('button[key=receiving_main]').click();" 
-         class="custom-button-blue" 
-         style="text-align: center; display: flex; align-items: center; justify-content: center;">
-        현재 연금<br>수령 중
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if st.button("현재 연금\n수령 중", key="receiving_main", type="secondary"):
+    # 수령 중 버튼  
+    if st.button("현재 연금\n수령 중", key="receiving_main", use_container_width=True):
         st.session_state.button_clicked = "receiving"
         st.rerun()
-    
-    st.markdown("""
-    <style>
-    button[key="receiving_main"] {
-        display: none !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     
     # 하단 버튼들
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("상품\n정보", key="product_main"):
+        if st.button("상품\n정보", key="product_main", use_container_width=True):
             st.session_state.button_clicked = "product"
             st.rerun()
     
     with col2:
-        if st.button("전화\n상담", key="consultation_main"):
+        if st.button("전화\n상담", key="consultation_main", use_container_width=True):
             st.session_state.button_clicked = "consultation"
             st.rerun()
     
