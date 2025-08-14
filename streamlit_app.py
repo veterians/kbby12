@@ -431,7 +431,7 @@ def render_final_screen(display_type: str, rec_df: pd.DataFrame):
     st.markdown(cards_html, unsafe_allow_html=True)
 
 # =================================
-# 수정된 CSS - 숨겨진 버튼 완전히 숨기기
+# 완전히 수정된 CSS + 세션 상태 방식
 # =================================
 st.markdown("""
 <style>
@@ -492,34 +492,73 @@ st.markdown("""
         margin-top: 10px;
     }
     
-    /* 숨겨진 버튼들 완전히 숨기기 */
-    button[data-testid="baseButton-secondary"] {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0 !important;
-        width: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        opacity: 0 !important;
-        position: absolute !important;
-        left: -9999px !important;
+    /* 메인 버튼 스타일링 */
+    .stButton > button {
+        width: 100% !important;
+        border: none !important;
+        border-radius: 20px !important;
+        font-size: 20px !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1) !important;
+        line-height: 1.4 !important;
+        padding: 25px 20px !important;
+        margin: 15px 0 !important;
+        white-space: pre-line !important;
+        height: 80px !important;
     }
     
-    /* 커스텀 버튼 호버 효과 */
-    .custom-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    .stButton > button:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
     }
     
-    .custom-button:active {
-        transform: translateY(0px);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* 미수령 버튼 스타일 */
+    div[data-testid="column"]:first-child .stButton > button,
+    [data-testid="stVerticalBlock"] > div:nth-child(2) .stButton > button {
+        background: #FFE4B5 !important;
+        color: #8B4513 !important;
+    }
+    
+    /* 수령 중 버튼 스타일 */
+    div[data-testid="column"]:nth-child(2) .stButton > button,
+    [data-testid="stVerticalBlock"] > div:nth-child(3) .stButton > button {
+        background: #B8D4F0 !important;
+        color: #2C5282 !important;
+        margin-bottom: 25px !important;
+    }
+    
+    /* 하단 버튼들 */
+    div[data-testid="column"]:nth-child(3) .stButton > button,
+    div[data-testid="column"]:nth-child(4) .stButton > button {
+        height: 60px !important;
+        font-size: 16px !important;
+        padding: 20px 15px !important;
+    }
+    
+    /* 상품 정보 버튼 */
+    div[data-testid="column"]:nth-child(3) .stButton > button {
+        background: #C6F6D5 !important;
+        color: #22543D !important;
+    }
+    
+    /* 전화 상담 버튼 */
+    div[data-testid="column"]:nth-child(4) .stButton > button {
+        background: #FED7E2 !important;
+        color: #97266D !important;
     }
     
     /* 모바일 최적화 */
     @media (max-width: 400px) {
         .main-container {
             padding: 15px;
+        }
+        
+        .stButton > button {
+            font-size: 18px !important;
+            padding: 20px 15px !important;
         }
         
         .kb-star, .kb-text {
@@ -529,19 +568,39 @@ st.markdown("""
         .main-title {
             font-size: 20px;
         }
-        
-        .custom-button {
-            font-size: 18px !important;
-            padding: 20px 15px !important;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
 
 # =================================
-# 수정된 메인 화면 함수
+# 세션 상태 직접 변경 방식 메인 화면
 # =================================
 def render_main_home():
+    # 세션 상태 초기화
+    if "button_clicked" not in st.session_state:
+        st.session_state.button_clicked = None
+    
+    # 버튼 클릭 처리 (페이지 최상단에서 먼저 확인)
+    if st.session_state.button_clicked:
+        if st.session_state.button_clicked == "not_receiving":
+            st.session_state.flow = "survey"
+            st.session_state.survey_type = "not_receiving"
+            st.session_state.button_clicked = None  # 리셋
+            st.rerun()
+        elif st.session_state.button_clicked == "receiving":
+            st.session_state.flow = "survey"
+            st.session_state.survey_type = "receiving"
+            st.session_state.button_clicked = None
+            st.rerun()
+        elif st.session_state.button_clicked == "product":
+            st.session_state.flow = "product_info"
+            st.session_state.button_clicked = None
+            st.rerun()
+        elif st.session_state.button_clicked == "consultation":
+            st.session_state.flow = "consultation"
+            st.session_state.button_clicked = None
+            st.rerun()
+    
     # 메인 컨테이너
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
@@ -553,84 +612,83 @@ def render_main_home():
             <span class="kb-text">KB</span>
             <span class="elderly-icons">👴👵</span>
         </div>
-        <div class="main-title">시니어 연금 계산기</div>
+        <div class="main-title">시니어 연금 계획기</div>
     </div>
     """, unsafe_allow_html=True)
     
     # 미수령 버튼
-    st.markdown("""
-    <div class="custom-button" onclick="document.getElementById('not_receiving_hidden').click()" 
-         style="background: #FFE4B5; color: #8B4513; padding: 25px 20px; margin: 15px 0; 
-                border-radius: 20px; text-align: center; font-size: 20px; font-weight: bold; 
-                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-                transition: all 0.2s ease; height: 80px; display: flex; align-items: center; 
-                justify-content: center; white-space: pre-line;">
-        현재 연금<br>미수령 중
-    </div>
-    """, unsafe_allow_html=True)
+    if st.button("현재 연금\n미수령 중", key="not_receiving_main", use_container_width=True):
+        st.session_state.button_clicked = "not_receiving"
+        st.rerun()
     
-    # 수령 중 버튼
-    st.markdown("""
-    <div class="custom-button" onclick="document.getElementById('receiving_hidden').click()" 
-         style="background: #B8D4F0; color: #2C5282; padding: 25px 20px; margin: 15px 0 25px 0; 
-                border-radius: 20px; text-align: center; font-size: 20px; font-weight: bold; 
-                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-                transition: all 0.2s ease; height: 80px; display: flex; align-items: center; 
-                justify-content: center; white-space: pre-line;">
-        현재 연금<br>수령 중
-    </div>
-    """, unsafe_allow_html=True)
+    # 수령 중 버튼  
+    if st.button("현재 연금\n수령 중", key="receiving_main", use_container_width=True):
+        st.session_state.button_clicked = "receiving"
+        st.rerun()
     
-    # 하단 버튼들을 위한 컨테이너
-    st.markdown('<div style="display: flex; gap: 15px;">', unsafe_allow_html=True)
+    # 하단 버튼들
+    col1, col2 = st.columns(2)
     
-    # 상품 정보 버튼
-    st.markdown("""
-    <div class="custom-button" onclick="document.getElementById('product_hidden').click()" 
-         style="background: #C6F6D5; color: #22543D; padding: 20px 15px; margin: 15px 0; 
-                border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
-                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-                transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
-                justify-content: center; white-space: pre-line; flex: 1;">
-        상품<br>정보
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 전화 상담 버튼
-    st.markdown("""
-    <div class="custom-button" onclick="document.getElementById('consultation_hidden').click()" 
-         style="background: #FED7E2; color: #97266D; padding: 20px 15px; margin: 15px 0; 
-                border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
-                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
-                transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
-                justify-content: center; white-space: pre-line; flex: 1;">
-        전화<br>상담
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)  # 하단 버튼 컨테이너 끝
-    
-    st.markdown('</div>', unsafe_allow_html=True)  # main-container 끝
-    
-    # 숨겨진 실제 버튼들 (화면에 보이지 않음)
-    with st.container():
-        if st.button("", key="not_receiving_hidden"):
-            st.session_state.flow = "survey"
-            st.session_state.survey_type = "not_receiving"
+    with col1:
+        if st.button("상품\n정보", key="product_main", use_container_width=True):
+            st.session_state.button_clicked = "product"
             st.rerun()
-        
-        if st.button("", key="receiving_hidden"):
-            st.session_state.flow = "survey"
-            st.session_state.survey_type = "receiving"
+    
+    with col2:
+        if st.button("전화\n상담", key="consultation_main", use_container_width=True):
+            st.session_state.button_clicked = "consultation"
             st.rerun()
-        
-        if st.button("", key="product_hidden"):
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# =================================
+# 대안: 더 간단한 직접 처리 방식
+# =================================
+def render_main_home_simple():
+    # CSS는 동일
+    st.markdown("""<style>/* 위의 CSS 동일 */</style>""", unsafe_allow_html=True)
+    
+    # 메인 컨테이너
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
+    
+    # KB 헤더
+    st.markdown("""
+    <div class="kb-header">
+        <div class="kb-logo">
+            <span class="kb-star">★</span>
+            <span class="kb-text">KB</span>
+            <span class="elderly-icons">👴👵</span>
+        </div>
+        <div class="main-title">시니어 연금 계획기</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 미수령 버튼 - 즉시 처리
+    if st.button("현재 연금\n미수령 중", key="not_receiving_direct", use_container_width=True):
+        st.session_state.flow = "survey"
+        st.session_state.survey_type = "not_receiving"
+        st.rerun()
+    
+    # 수령 중 버튼 - 즉시 처리
+    if st.button("현재 연금\n수령 중", key="receiving_direct", use_container_width=True):
+        st.session_state.flow = "survey" 
+        st.session_state.survey_type = "receiving"
+        st.rerun()
+    
+    # 하단 버튼들
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("상품\n정보", key="product_direct", use_container_width=True):
             st.session_state.flow = "product_info"
             st.rerun()
-        
-        if st.button("", key="consultation_hidden"):
+    
+    with col2:
+        if st.button("전화\n상담", key="consultation_direct", use_container_width=True):
             st.session_state.flow = "consultation"
             st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # 공통 설문 문항
 QUESTIONS = [
