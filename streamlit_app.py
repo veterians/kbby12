@@ -521,6 +521,7 @@ st.markdown("""
     [data-testid="stVerticalBlock"] > div:nth-child(2) .stButton > button {
         background: #FFE4B5 !important;
         color: #8B4513 !important;
+        margin-bottom: 25px !important;
     }
     
     /* 수령 중 버튼 스타일 */
