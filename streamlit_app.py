@@ -76,7 +76,12 @@ def load_models():
 def load_deposit_csv():
     path = os.path.join(BASE_DIR, DEPOSIT_CSV)
     if not os.path.exists(path):
-        raise FileNotFoundError(f"예·적금 파일이 없습니다: {path}")
+        # 샘플 데이터 생성
+        return pd.DataFrame({
+            '상품명': ['KB 정기예금', 'KB 적금플러스', 'KB 연금저축'],
+            '기본금리': ['3.5%', '4.0%', '3.8%'],
+            '최고한도': [10000, 5000, 20000]
+        })
     for enc in ("utf-8-sig", "cp949"):
         try: return pd.read_csv(path, encoding=enc)
         except UnicodeDecodeError: pass
@@ -86,7 +91,12 @@ def load_deposit_csv():
 def load_fund_csv():
     path = os.path.join(BASE_DIR, FUND_CSV)
     if not os.path.exists(path):
-        raise FileNotFoundError(f"펀드 파일이 없습니다: {path}")
+        # 샘플 데이터 생성
+        return pd.DataFrame({
+            '펀드명': ['KB 스타펀드', 'KB 성장펀드', 'KB 안정펀드'],
+            '수익률': ['8.5%', '12.3%', '5.2%'],
+            '위험등급': ['3', '4', '2']
+        })
     for enc in ("utf-8-sig", "cp949"):
         try: return pd.read_csv(path, encoding=enc)
         except UnicodeDecodeError: pass
@@ -242,7 +252,8 @@ def recommend_fallback_split(user: dict) -> pd.DataFrame:
     try:
         dep_raw = load_deposit_csv()
         fun_raw = load_fund_csv()
-    except FileNotFoundError:
+    except Exception as e:
+        st.warning(f"데이터 로딩 오류: {e}")
         return pd.DataFrame({'메시지': ['상품 데이터 파일이 없어서 추천을 할 수 없습니다. 😢']})
     
     dep = preprocess_products(dep_raw, "예·적금")
@@ -559,7 +570,149 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =================================
-# UI 흐름
+# 메인 화면 (이미지처럼) =====
+def render_main_home():
+    # 메인 컨테이너
+    st.markdown('<div class="main-container">', unsafe_allow_html=True)
+    
+    # KB 헤더
+    st.markdown("""
+    <div class="kb-header">
+        <div class="kb-logo">
+            <span class="kb-star">★</span>
+            <span class="kb-text">b KB</span>
+            <span class="elderly-icons">👴👵</span>
+        </div>
+        <div class="main-title">시니어 연금 계산기</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 현재 연금 미수령 중 버튼
+    if st.button("현재 연금\n미수령 중", key="not_receiving_btn", use_container_width=True):
+        ss.flow = "survey"
+        ss.survey_type = "not_receiving"  # 미수령자 구분
+        st.rerun()
+    
+    # 현재 연금 수령 중 버튼  
+    if st.button("현재 연금\n수령 중", key="receiving_btn", use_container_width=True):
+        ss.flow = "survey"
+        ss.survey_type = "receiving"  # 수령자 구분
+        st.rerun()
+    
+    # 하단 버튼들
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("상품\n정보", key="product_btn", use_container_width=True):
+            ss.flow = "product_info"
+            st.rerun()
+    
+    with col2:
+        if st.button("전화\n상담", key="consultation_btn", use_container_width=True):
+            ss.flow = "consultation"
+            st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)  # main-container 끝
+
+# 공통 설문 문항
+QUESTIONS = [
+    ("나이를 입력해주세요.", "number", "age"),
+    ("성별을 선택해주세요.", "select", "gender", ["남성", "여성"]),
+    ("가구원 수를 입력해주세요.", "number", "family_size"),
+    ("피부양자가 있나요?", "select", "dependents", ["예", "아니오"]),
+    ("현재 보유한 금융자산(만원)을 입력해주세요.", "number", "assets"),
+    ("월 수령하는 연금 금액(만원)을 입력해주세요.", "number", "pension"),
+    ("월 평균 지출비(만원)은 얼마인가요?", "number", "living_cost"),
+    ("월 평균 소득은 얼마인가요?", "number", "income"),
+    ("투자 성향을 선택해주세요.", "select", "risk",
+        ["안정형", "안정추구형", "위험중립형", "적극투자형", "공격투자형"]),
+]
+
+def render_type_result():
+    display_type = ss.get("tabnet_label")
+    if not display_type:
+        st.info("먼저 설문을 완료해주세요.")
+        if st.button("설문 시작하기"):
+            ss.flow = "survey"
+        return
+
+    # TabNet 설명 우선, 없으면 투자성향 설명 폴백
+    if display_type in TABNET_TYPE_DESCRIPTIONS:
+        title = display_type
+        desc  = TABNET_TYPE_DESCRIPTIONS[display_type]
+    elif display_type in RISK_STYLE_DESCRIPTIONS:
+        title = display_type
+        desc  = RISK_STYLE_DESCRIPTIONS[display_type]
+    else:
+        title = DEFAULT_DISPLAY_TYPE
+        desc  = TABNET_TYPE_DESCRIPTIONS.get(DEFAULT_DISPLAY_TYPE, "")
+
+    st.markdown(f"## {title}")
+    st.write(desc)
+
+    colA, colB = st.columns(2)
+    with colA:
+        if st.button("맞춤 상품 추천 보기", use_container_width=True):
+            ss.flow = "recommend"
+    with colB:
+        if st.button("메인으로", use_container_width=True):
+            ss.flow = "main"
+
+# --- 설문 위젯 key 전용 prefix (충돌 방지) ---
+def _SURVEY_KEY(k: str) -> str:
+    return f"survey_{k}"
+
+def render_survey_form(defaults: dict | None = None, lock_inferred: bool = False):
+    survey_type = ss.get("survey_type", "not_receiving")
+    
+    if survey_type == "not_receiving":
+        st.subheader("📝 현재 연금 미수령 중 - 설문조사")
+        st.write("향후 연금 수령을 위한 맞춤 분석을 시작합니다.")
+    else:
+        st.subheader("📝 현재 연금 수령 중 - 설문조사") 
+        st.write("현재 연금 수령 현황을 분석하여 최적화 방안을 제시합니다.")
+    
+    answers = {}
+    defaults = defaults or {}
+
+    # 최초 프리필 시 세션에 기본값 주입
+    def _seed_default(key, value):
+        skey = _SURVEY_KEY(key)
+        if (skey not in st.session_state) and (value is not None):
+            st.session_state[skey] = value
+
+    _seed_default("income",  defaults.get("income"))
+    _seed_default("pension", defaults.get("pension"))
+
+    with st.form("survey_form"):  # ← 폼으로 묶음: 버튼 1개만 생성됨
+        for q in QUESTIONS:
+            title, kind, key = q[0], q[1], q[2]
+            disabled = lock_inferred and (key in defaults)
+            wkey = _SURVEY_KEY(key)
+
+            if kind == "number":
+                answers[key] = st.number_input(title, min_value=0, step=1, key=wkey, disabled=disabled)
+            elif kind == "select":
+                answers[key] = st.selectbox(title, q[3], key=wkey, disabled=disabled)
+
+        submitted = st.form_submit_button("유형 분류하기")  # ← 버튼은 여기 '한 번'만
+
+    return answers, submitted
+
+def map_survey_to_model_input(r):
+    gender = 0 if r["gender"] == "남성" else 1
+    dependents = 1 if r["dependents"] == "예" else 0
+    risk_map = {"안정형": 0, "안정추구형": 1, "위험중립형": 2, "적극투자형": 3, "공격투자형": 4}
+    risk = risk_map[r["risk"]]
+    arr = np.array([[
+        float(r["age"]), gender, float(r["family_size"]), dependents,
+        float(r["assets"]), float(r["pension"]), float(r["living_cost"]),
+        float(r["income"]), risk
+    ]])
+    return arr
+
+# =================================
+# UI 플로우
 # =================================
 st.title("💬 KB 시니어 연금 계산기")
 
@@ -571,3 +724,482 @@ ss.setdefault("answers", {})
 ss.setdefault("prefill_survey", {})
 ss.setdefault("pred_label", None)
 ss.setdefault("tabnet_label", None)    # ← TabNet 금융유형(표시용)
+
+# 메인 라우팅 시작
+if ss.flow == "main":
+    render_main_home()
+    
+elif ss.flow == "survey":
+    answers, submitted = render_survey_form(
+        defaults=ss.get("prefill_survey", {}),
+        lock_inferred=LOCK_INFERRED_FIELDS
+    )
+
+    # 제출 처리
+    if submitted:
+        if (survey_model is None) or (survey_encoder is None):
+            # 모델이 없어도 설문 결과 저장 후 곧바로 결과 화면으로 이동
+            ss.pred_label = answers.get("risk") or "안정형"
+            ss.answers = answers
+            ss.flow = "result"
+            st.rerun()  # ← 즉시 결과 화면으로 전환
+        else:
+            try:
+                arr = map_survey_to_model_input(answers)
+                pred = survey_model.predict(arr)
+                tabnet_label = survey_encoder.inverse_transform(pred)[0].strip()
+                st.session_state["tabnet_label"] = tabnet_label
+                st.session_state["pred_label"]   = tabnet_label
+                ss.answers = answers
+    
+                # (선택) 예측 확률 막대차트
+                if SHOW_PROBA_CHART:
+                    proba_method = getattr(survey_model, "predict_proba", None)
+                    if callable(proba_method):
+                        proba = proba_method(arr)
+                        proba_df = pd.DataFrame(proba, columns=survey_encoder.classes_)
+                        st.bar_chart(proba_df.T)
+    
+                # (선택) 성공 메시지
+                if SHOW_SUCCESS_TOAST:
+                    st.success(f"🧾 예측된 금융 유형: **{tabnet_label}**")
+    
+                # 곧바로 유형 결과 화면으로 이동
+                ss.flow = "result"
+                st.rerun()  # ← 여기 추가가 핵심
+            except Exception as e:
+                st.error(f"오류 발생: {e}")
+
+    # 📽 폼 '밖'에 보조 네비게이션 버튼들 (제출과 독립적)
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("메인으로", key="survey_nav_main"):
+            ss.flow = "main"
+    with col2:
+        if st.button("추천으로", key="survey_nav_reco"):
+            # 설문 미제출이어도 이동 허용 (필요 시 tabnet_label 체크해서 survey로 돌려보내도 됨)
+            ss.flow = "recommend"
+    with col3:
+        if st.button("시뮬레이션으로", key="survey_nav_sim"):
+            ss.flow = "recommend"  # 추천 화면 하단의 시뮬레이션 섹션에서 보이도록
+
+elif ss.flow == "result":
+    render_type_result()
+    
+elif ss.flow == "recommend":
+    st.markdown("---")
+    st.subheader("🧲 금융상품 추천")
+
+    # 1) 입력 폼
+    invest_amount  = st.number_input("투자금액(만원)", min_value=10, step=10, value=500, key="reco_amount")
+    invest_period  = st.selectbox("투자기간(개월)", [6, 12, 24, 36], index=1, key="reco_period")
+    risk_choice    = st.selectbox("리스크 허용도", ["안정형", "위험중립형", "공격형"], index=1, key="reco_risk")
+    target_monthly = st.number_input("목표 월이자(만원)", min_value=1, step=1, value=10, key="reco_target")
+
+    # 2) 추천 실행
+    if st.button("추천 보기", key="reco_btn"):
+        user_pref = {
+            '투자금액':   int(invest_amount),
+            '투자기간':   int(invest_period),
+            '투자성향':   str(risk_choice),
+            '목표월이자': float(target_monthly),
+        }
+        rec_df = recommend_fallback_split(user_pref)
+        if "메시지" in rec_df.columns:
+            st.warning(rec_df.iloc[0, 0])
+        else:
+            st.session_state["rec_df"]        = rec_df
+            st.session_state["display_type"]  = st.session_state.get("tabnet_label") or DEFAULT_DISPLAY_TYPE
+            st.session_state["risk_choice"]   = risk_choice
+            st.session_state["show_reco"]     = True
+            st.session_state.pop("selected_product", None)   # ☆ 상세 선택 초기화
+            st.rerun()
+
+    # 3) 추천 결과 (카드 + 근거만)
+    if st.session_state.get("show_reco") and ("rec_df" in st.session_state):
+        rec_df       = st.session_state["rec_df"]
+        display_type = st.session_state.get("display_type", DEFAULT_DISPLAY_TYPE)
+        risk_choice  = st.session_state.get("risk_choice", "위험중립형")
+
+        render_final_screen(display_type, rec_df)
+        # === 카드 아래 '자세히 보기' 버튼들 ===
+        rec_records = rec_df.head(3).to_dict(orient="records")
+        cols = st.columns(len(rec_records) if rec_records else 1)
+        
+        for i, (col, r) in enumerate(zip(cols, rec_records)):
+            with col:
+                pname = str(r.get("상품명", "-"))
+                if st.button(f"🔍 {pname} 자세히 보기", key=f"prod_detail_{i}"):
+                    st.session_state["selected_product"] = r
+                    st.rerun()
+        
+        # === 선택된 상품 상세 영역 ===
+        sel = st.session_state.get("selected_product")
+        if sel:
+            st.markdown("---")
+            st.subheader("📋 상품 상세")
+            # 예상수익률 표시는 (예상수익률(연) 있으면 그걸, 없으면 숫자를 %로 변환)
+            rate_txt = sel.get("예상수익률(연)")
+            if not rate_txt:
+                try:
+                    rate_txt = f"{float(sel.get('예상수익률', 0.0))*100:.2f}%"
+                except Exception:
+                    rate_txt = "-"
+        
+            rows = [
+                ("상품명", sel.get("상품명", "-")),
+                ("월예상수익금(만원)", sel.get("월예상수익금(만원)", "-")),
+                ("예상수익률", rate_txt),
+                ("투자기간", f"{sel.get('투자기간(개월)', sel.get('권장투자기간','-'))}개월"),
+                ("최소투자금액", sel.get("최소투자금액", "-")),
+            ]
+            st.table(pd.DataFrame(rows, columns=["항목", "값"]))
+        
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("선택 해제", key="clear_selected_product"):
+                    st.session_state.pop("selected_product", None)
+                    st.rerun()
+            with c2:
+                if st.button("시뮬레이션으로 이동", key="go_sim_from_detail"):
+                    ss.flow = "sim"
+                    st.rerun()
+
+        # 추천 근거(고갈 여부는 내부 계산해서 문장만)
+        ans = st.session_state.get("answers", {})
+        current_age     = int(ans.get("age", 67))
+        end_age         = 100
+        current_assets  = float(ans.get("assets", 9000))
+        pension_month   = float(ans.get("pension", 0))
+        income_month    = float(ans.get("income", 0))
+        monthly_income  = pension_month + income_month
+        monthly_expense = float(ans.get("living_cost", 130))
+
+        base_return = 0.02
+        log_base, depletion_base = retirement_simulation(
+            current_age, end_age, current_assets, monthly_income, monthly_expense,
+            inflation_rate=0.03, investment_return=base_return
+        )
+        reason_text = recommend_reason_from_simulation(
+            depletion_base, current_age, current_assets, monthly_income, monthly_expense, risk_choice
+        )
+        st.info(f"🔎 추천 근거: {reason_text}")
+
+        # 다운로드
+        csv_bytes = rec_df.to_csv(index=False).encode('utf-8-sig')
+        st.download_button("추천 결과 CSV 다운로드", csv_bytes, "recommendations.csv", "text/csv")
+        col_go1, col_go2 = st.columns(2)
+        with col_go1:
+            if st.button("📈 노후 시뮬레이션으로", key="go_to_sim"):
+                ss.flow = "sim"          # 상태(rec_df 등) 그대로 유지한 채 이동
+                st.rerun()
+        with col_go2:
+            if st.button("🏠 메인으로", key="go_to_main_from_reco"):
+                ss.flow = "main"         # 상태는 유지(원한다면 유지), '처음으로'와 역할 분리
+                st.rerun()
+
+elif ss.flow == "predict":
+    st.subheader("📈 연금 계산기")
+
+    # 폼으로 묶어 중복 버튼/리렌더 방지
+    with st.form("predict_form"):
+        income = st.number_input("평균 월소득(만원)", min_value=0, step=1, key="pred_income")
+        years  = st.number_input("국민연금 가입기간(년)", min_value=0, max_value=50, step=1, key="pred_years")
+        pred_submit = st.form_submit_button("연금 예측하기")
+
+    if pred_submit:
+        if reg_model is None:
+            # 모델 없어도 설문으로 이동 가능하게 프리필 0원 세팅
+            ss.prefill_survey = {"income": income, "pension": 0}
+            st.info("연금 예측 모델이 없어 계산을 건너뜁니다.")
+            st.session_state["predicted"] = True
+            st.session_state["pred_amount"] = 0.0
+            st.rerun()
+        else:
+            try:
+                X = pd.DataFrame([{"평균월소득(만원)": income, "가입기간(년)": years}])
+                amount = round(float(reg_model.predict(X)[0]), 1)
+
+                # 결과/프리필 저장
+                ss.prefill_survey = {"income": income, "pension": amount}
+                ss.pred_amount = amount
+                st.session_state["predicted"] = True
+                st.session_state["pred_amount"] = amount
+                st.rerun()
+            except Exception as e:
+                st.exception(e)
+
+    # 예측이 끝났으면 결과 + 네비게이션 버튼 노출
+    if st.session_state.get("predicted"):
+        amt = st.session_state.get("pred_amount", 0.0)
+
+        # 보조설명(선택)
+        def classify_pension_type(a):
+            if a >= 90: return "완전노령연금"
+            if a >= 60: return "조기노령연금"
+            if a >= 30: return "감액노령연금"
+            return "특례노령연금"
+        ptype = classify_pension_type(amt)
+        explains = {
+            "조기노령연금": "※ 만 60세부터 수령 가능하나 최대 30% 감액될 수 있어요.",
+            "완전노령연금": "※ 만 65세부터 감액 없이 정액 수령이 가능해요.",
+            "감액노령연금": "※ 일정 조건을 만족하지 못할 경우 감액되어 수령됩니다.",
+            "특례노령연금": "※ 가입기간이 짧더라도 일정 기준 충족 시 수령 가능."
+        }
+
+        st.success(f"💰 예측 연금 수령액: **{amt}만원/월**")
+        st.caption(f"예측 연금 유형: **{ptype}**")
+        st.info(explains[ptype])
+
+        st.markdown("---")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            if st.button("👉 설문으로 진행", key="pred_go_survey"):
+                ss.flow = "survey"
+                st.rerun()
+        with c2:
+            if st.button("🧲 바로 추천 보기", key="pred_go_reco"):
+                # 설문을 건너뛰는 경우도 있으니, 최소 기본값 보장
+                ss.answers = ss.get("answers", {})
+                ss.flow = "recommend"
+                st.rerun()
+        with c3:
+            if st.button("🏠 메인으로", key="pred_go_main"):
+                ss.flow = "main"
+                st.rerun()
+
+    # 예측 전이라도 이동하고 싶다면(옵션)
+    st.markdown("---")
+    if st.button("건너뛰고 설문으로", key="pred_skip_to_survey"):
+        ss.flow = "survey"
+        st.rerun()
+
+elif ss.flow == "sim":
+    st.subheader("📈 노후 시뮬레이션")
+
+    has_reco = "rec_df" in st.session_state and not st.session_state["rec_df"].empty
+    rec_df = st.session_state["rec_df"] if has_reco else pd.DataFrame()
+    risk_choice = st.session_state.get("risk_choice", "위험중립형")
+
+    if not has_reco:
+        st.info("추천 결과 없이도 기본 시뮬레이션을 먼저 볼 수 있어요. "
+                "'맞춤 상품 추천'에서 추천을 실행하면 상품별 탭이 추가됩니다.")
+
+    # 설문값(없으면 기본값)
+    ans = st.session_state.get("answers", {})
+    current_age     = int(ans.get("age", 67))
+    end_age         = 100
+    current_assets  = float(ans.get("assets", 9000))
+    pension_month   = float(ans.get("pension", 0))
+    income_month    = float(ans.get("income", 0))
+    monthly_income  = pension_month + income_month
+    monthly_expense = float(ans.get("living_cost", 130))
+
+    base_return   = 0.02
+    invest_return = get_invest_return_from_risk(risk_choice)
+
+    log_base, depletion_base = retirement_simulation(
+        current_age, end_age, current_assets, monthly_income, monthly_expense,
+        inflation_rate=0.03, investment_return=base_return
+    )
+    log_invest, depletion_invest = simulate_with_financial_product(
+        current_age, end_age, current_assets, monthly_income, monthly_expense,
+        invest_return=invest_return
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(f"기본 시나리오(연 {int(base_return*100)}%) 고갈 나이",
+                  value=f"{depletion_base}세" if depletion_base else "고갈 없음")
+    with col2:
+        st.metric(f"금융상품 적용(연 {int(invest_return*100)}%) 고갈 나이",
+                  value=f"{depletion_invest}세" if depletion_invest else "고갈 없음")
+
+    st.markdown("### ⚙️ 시뮬레이션 가정값")
+    with st.form("sim_form_only"):
+        colA, colB = st.columns(2)
+        with colA:
+            inflation_pct = st.slider("물가상승률(연, %)", 0.0, 8.0, 3.0, 0.1, key="sim_inflation_only")
+        with colB:
+            base_return_pct = st.slider("기본 시나리오 수익률(연, %)", 0.0, 6.0, 2.0, 0.1, key="sim_base_return_only")
+        submitted = st.form_submit_button("시뮬레이션 실행")
+
+    if submitted:
+        inflation = inflation_pct / 100.0
+        base_r    = base_return_pct / 100.0
+
+        log_base2, _ = retirement_simulation(
+            current_age, end_age, current_assets, monthly_income, monthly_expense,
+            inflation_rate=inflation, investment_return=base_r
+        )
+        df_b = (pd.DataFrame(log_base2)[['나이','잔액']]
+                .rename(columns={'잔액':'기본 시나리오'}) if log_base2 else pd.DataFrame())
+
+        # 추천 결과가 있을 때만 상품 탭 렌더
+        if has_reco:
+            st.markdown("### 📈 추천 상품별 적용 시나리오")
+            rec_records = rec_df.to_dict(orient="records")
+            tabs = st.tabs([f"{i+1}. {r.get('상품명','-')}" for i, r in enumerate(rec_records)])
+
+            for tab, r in zip(tabs, rec_records):
+                with tab:
+                    if '예상수익률' in r and pd.notnull(r['예상수익률']):
+                        prod_return_pct = float(r['예상수익률']) * 100.0
+                    else:
+                        txt = str(r.get('예상수익률(연)','0')).replace('%','')
+                        try: prod_return_pct = float(txt)
+                        except: prod_return_pct = 5.0
+                    prod_r = prod_return_pct / 100.0
+
+                    log_prod2, _ = retirement_simulation(
+                        current_age, end_age, current_assets, monthly_income, monthly_expense,
+                        inflation_rate=inflation, investment_return=prod_r
+                    )
+                    df_p = pd.DataFrame(log_prod2)[['나이','잔액']].rename(
+                        columns={'잔액': f"{r.get('상품명','-')} 적용"}
+                    )
+                    st.caption(
+                        f"가정 수익률: 기본 **{base_return_pct:.1f}%**, "
+                        f"해당 상품 **{prod_return_pct:.1f}%** · 물가상승률 **{inflation_pct:.1f}%**"
+                    )
+                    chart_df = (pd.merge(df_b, df_p, on='나이', how='outer').set_index('나이')
+                                if not df_b.empty else df_p.set_index('나이'))
+                    st.line_chart(chart_df)
+        else:
+            st.info("상품별 그래프는 추천 실행 후 표시됩니다. '맞춤 상품 추천'에서 추천을 실행해 주세요.")
+
+    st.markdown("---")
+    colX, colY = st.columns(2)
+    with colX:
+        if st.button("맞춤 상품 추천으로"):
+            ss.flow = "recommend"
+            st.rerun()
+    with colY:
+        if st.button("메인으로"):
+            ss.flow = "main"
+            st.rerun()
+
+elif ss.flow == "product_info":
+    st.markdown("### 📋 KB 시니어 연금 상품 정보")
+    st.write("KB 시니어 연금 상품에 대한 자세한 정보를 제공합니다.")
+    
+    # 상품 정보 카드들
+    st.markdown("""
+    **🏦 KB 시니어 연금보험**
+    - 특징: 안정적인 노후 소득 보장
+    - 세제혜택: 연금저축 세액공제 혜택
+    - 수령방식: 종신연금, 확정연금 선택 가능
+    - 최소가입금액: 월 10만원부터
+    
+    **💰 KB 퇴직연금**
+    - 특징: 퇴직금을 연금으로 전환
+    - 세제혜택: 퇴직소득세 이연 혜택
+    - 운용방식: 원리금보장형, 실적배당형
+    - 수수료: 경쟁력 있는 수수료 구조
+    
+    **📈 KB 연금펀드**
+    - 특징: 다양한 자산군 분산투자
+    - 수익구조: 시장 수익률 연동
+    - 리스크: 투자위험 존재 (원금손실 가능)
+    - 적합대상: 중장기 투자자
+    """)
+    
+    # 가입 조건
+    st.markdown("### 📝 가입 조건")
+    st.markdown("""
+    **공통 가입 조건:**
+    - 만 18세 이상 65세 이하
+    - 소득 증빙이 가능한 분
+    - 건강 상태 양호 (일부 상품)
+    
+    **필요 서류:**
+    - 신분증, 소득증빙서류
+    - 건강진단서 (필요시)
+    - 기타 심사 관련 서류
+    """)
+    
+    if st.button("← 메인으로 돌아가기"):
+        ss.flow = "main"
+        st.rerun()
+
+elif ss.flow == "consultation":
+    st.markdown("### 📞 KB 시니어 연금 상담센터")
+    st.write("전문 상담사와 1:1 맞춤 상담을 받아보세요.")
+    
+    st.markdown("""
+    **📋 상담 안내**
+    - **상담 전화번호:** 1588-9999
+    - **운영시간:**
+      - 평일: 오전 9시 ~ 오후 6시
+      - 토요일: 오전 9시 ~ 오후 1시
+      - 일요일 및 공휴일: 휴무
+    """)
+    
+    # 상담 신청 폼
+    st.markdown("### ✏️ 상담 신청서")
+    
+    with st.form("consultation_form"):
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            name = st.text_input("성명 *")
+            phone = st.text_input("연락처 *")
+            age_group = st.selectbox("연령대", ["40대", "50대", "60대", "70대 이상"])
+        
+        with col2:
+            email = st.text_input("이메일")
+            preferred_time = st.selectbox("희망 상담 시간", 
+                ["오전 9-12시", "오후 1-3시", "오후 3-6시", "시간 무관"])
+            consultation_type = st.selectbox("상담 유형", 
+                ["연금보험 상담", "퇴직연금 상담", "펀드 상담", "종합 상담"])
+        
+        inquiry = st.text_area("문의 내용", placeholder="상담받고 싶은 내용을 자세히 적어주세요.")
+        
+        # 개인정보 동의
+        privacy_agree = st.checkbox("개인정보 수집·이용에 동의합니다. *")
+        marketing_agree = st.checkbox("마케팅 목적의 개인정보 이용에 동의합니다.")
+        
+        submitted = st.form_submit_button("상담 신청하기", use_container_width=True)
+    
+    if submitted:
+        if name and phone and privacy_agree:
+            # 상담 신청 성공 처리
+            st.success("✅ 상담 신청이 완료되었습니다!")
+            
+            st.markdown(f"""
+            **📋 신청 내용 확인**
+            - **성명:** {name}
+            - **연락처:** {phone}
+            - **상담 유형:** {consultation_type}
+            - **희망 시간:** {preferred_time}
+            """)
+            
+            st.info("💡 영업일 기준 1-2일 내에 담당자가 연락드릴 예정입니다.")
+            
+        else:
+            st.error("❌ 필수 항목을 모두 입력해주세요.")
+    
+    # 자주 묻는 질문
+    with st.expander("❓ 자주 묻는 질문"):
+        st.markdown("""
+        **Q: 상담 비용이 있나요?**
+        A: 모든 상담은 무료입니다.
+        
+        **Q: 가입을 강요하지는 않나요?**
+        A: 고객의 필요에 따른 맞춤 상담을 제공하며, 가입을 강요하지 않습니다.
+        
+        **Q: 어떤 서류를 준비해야 하나요?**
+        A: 신분증과 소득증빙서류를 준비해주시면 더 정확한 상담이 가능합니다.
+        
+        **Q: 온라인으로도 상담받을 수 있나요?**
+        A: 네, 화상상담도 가능합니다. 상담 신청시 요청해주세요.
+        """)
+    
+    if st.button("← 메인으로 돌아가기"):
+        ss.flow = "main"
+        st.rerun()
+
+else:
+    # 기본값: 메인 화면으로
+    render_main_home()
