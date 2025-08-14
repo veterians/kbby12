@@ -653,28 +653,106 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    # 미수령 버튼
-    if st.button("현재 연금\n미수령 중", key="not_receiving_main", use_container_width=True):
+    # HTML 커스텀 버튼들
+    
+    # 미수령 버튼 (주황색)
+    if st.button("", key="not_receiving_hidden", help="hidden"):
         st.session_state.button_clicked = "not_receiving"
         st.rerun()
     
-    # 수령 중 버튼  
-    if st.button("현재 연금\n수령 중", key="receiving_main", use_container_width=True):
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #FFE4B5, #FFDAB9);
+        color: #8B4513;
+        padding: 20px;
+        margin: 15px 0;
+        border-radius: 20px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        border: 2px solid #DEB887;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    " onclick="document.querySelector('button[data-testid*=not_receiving_hidden]').click()">
+        🔶 현재 연금 미수령 중
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 수령 중 버튼 (파란색)
+    if st.button("", key="receiving_hidden", help="hidden"):
         st.session_state.button_clicked = "receiving"
         st.rerun()
+        
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #B8D4F0, #ADD8E6);
+        color: #2C5282;
+        padding: 20px;
+        margin: 15px 0;
+        border-radius: 20px;
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        border: 2px solid #87CEEB;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    " onclick="document.querySelector('button[data-testid*=receiving_hidden]').click()">
+        🔷 현재 연금 수령 중
+    </div>
+    """, unsafe_allow_html=True)
     
     # 하단 버튼들
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("상품\n정보", key="product_main", use_container_width=True):
+        if st.button("", key="product_hidden", help="hidden"):
             st.session_state.button_clicked = "product"
             st.rerun()
+            
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #C6F6D5, #B0E7C3);
+            color: #22543D;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #9AE6B4;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        " onclick="document.querySelector('button[data-testid*=product_hidden]').click()">
+            📋 상품 정보
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
-        if st.button("전화\n상담", key="consultation_main", use_container_width=True):
+        if st.button("", key="consultation_hidden", help="hidden"):
             st.session_state.button_clicked = "consultation"
             st.rerun()
+            
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #FED7E2, #FBB6CE);
+            color: #97266D;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 2px solid #F687B3;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        " onclick="document.querySelector('button[data-testid*=consultation_hidden]').click()">
+            📞 전화 상담
+        </div>
+        """, unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
 
