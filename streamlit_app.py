@@ -431,7 +431,7 @@ def render_final_screen(display_type: str, rec_df: pd.DataFrame):
     cards_html = '<div class="cards">' + ''.join(cards) + '</div>'
     st.markdown(cards_html, unsafe_allow_html=True)
 
-# 기본 스타일 ========
+# 기본 스타일
 st.markdown("""
 <style>
     .stApp {
@@ -540,8 +540,8 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    # 미수령 버튼 (주황색)
-    html_not_receiving = """
+    # 미수령 버튼 (주황색) - markdown 방식으로 변경
+    st.markdown("""
     <div id="notReceivingButton" class="custom-button btn-orange" 
          onclick="document.querySelector('button[data-testid*=hidden_not_receiving]').click()">
         🔶 현재 연금 미수령 중
@@ -581,15 +581,14 @@ def render_main_home():
         background: linear-gradient(135deg, #FFDAB9, #F4A460);
     }
     </style>
-    """
-    components.html(html_not_receiving, height=100)
+    """, unsafe_allow_html=True)
     
     if st.button("", key="hidden_not_receiving"):
         st.session_state.button_clicked = "not_receiving"
         st.rerun()
     
     # 수령 중 버튼 (파란색)
-    html_receiving = """
+    st.markdown("""
     <div id="receivingButton" class="custom-button btn-blue" 
          onclick="document.querySelector('button[data-testid*=hidden_receiving]').click()">
         🔷 현재 연금 수령 중
@@ -605,8 +604,7 @@ def render_main_home():
         background: linear-gradient(135deg, #ADD8E6, #87CEEB);
     }
     </style>
-    """
-    components.html(html_receiving, height=100)
+    """, unsafe_allow_html=True)
     
     if st.button("", key="hidden_receiving"):
         st.session_state.button_clicked = "receiving"
@@ -616,7 +614,7 @@ def render_main_home():
     col1, col2 = st.columns(2)
     
     with col1:
-        html_product = """
+        st.markdown("""
         <div id="productButton" class="custom-button btn-green" 
              onclick="document.querySelector('button[data-testid*=hidden_product]').click()">
             📋 상품정보
@@ -634,15 +632,14 @@ def render_main_home():
             background: linear-gradient(135deg, #B0E7C3, #9AE6B4);
         }
         </style>
-        """
-        components.html(html_product, height=80)
+        """, unsafe_allow_html=True)
         
         if st.button("", key="hidden_product"):
             st.session_state.button_clicked = "product"
             st.rerun()
     
     with col2:
-        html_consultation = """
+        st.markdown("""
         <div id="consultationButton" class="custom-button btn-pink" 
              onclick="document.querySelector('button[data-testid*=hidden_consultation]').click()">
             📞 전화상담
@@ -660,8 +657,7 @@ def render_main_home():
             background: linear-gradient(135deg, #FBB6CE, #F687B3);
         }
         </style>
-        """
-        components.html(html_consultation, height=80)
+        """, unsafe_allow_html=True)
         
         if st.button("", key="hidden_consultation"):
             st.session_state.button_clicked = "consultation"
