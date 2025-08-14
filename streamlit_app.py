@@ -431,148 +431,9 @@ def render_final_screen(display_type: str, rec_df: pd.DataFrame):
     st.markdown(cards_html, unsafe_allow_html=True)
 
 # =================================
-# CSS 스타일링 - KB 디자인
+# 메인 화면 (이미지처럼) 
 # =================================
-st.markdown("""
-<style>
-    /* 전체 앱 스타일 */
-    .stApp {
-        background-color: #f8f9fa;
-        max-width: 400px;
-        margin: 0 auto;
-    }
-    
-    /* 메인 컨테이너 */
-    .main-container {
-        background: #f8f9fa;
-        padding: 20px;
-        margin: 0 auto;
-        max-width: 350px;
-    }
-    
-    /* KB 로고 및 헤더 */
-    .kb-header {
-        text-align: center;
-        margin-bottom: 40px;
-        background: white;
-        padding: 25px 20px;
-        border-radius: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    
-    .kb-logo {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 15px;
-        gap: 10px;
-    }
-    
-    .kb-star {
-        color: #FFB800;
-        font-size: 32px;
-        font-weight: bold;
-    }
-    
-    .kb-text {
-        color: #666;
-        font-size: 32px;
-        font-weight: bold;
-        margin-right: 15px;
-    }
-    
-    .elderly-icons {
-        font-size: 40px;
-    }
-    
-    .main-title {
-        font-size: 24px;
-        font-weight: bold;
-        color: #333;
-        margin-top: 10px;
-    }
-    
-    /* 메인 버튼 스타일링 */
-    .stButton > button {
-        width: 100% !important;
-        border: none !important;
-        border-radius: 20px !important;
-        font-size: 20px !important;
-        font-weight: bold !important;
-        text-align: center !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1) !important;
-        line-height: 1.4 !important;
-        padding: 25px 20px !important;
-        margin: 15px 0 !important;
-        white-space: pre-line !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
-    }
-    
-    /* 첫 번째 버튼 (미수령) - 노란색 */
-    div[data-testid="stVerticalBlock"] > div:nth-child(2) .stButton > button {
-        background: #FFE4B5 !important;
-        color: #8B4513 !important;
-        height: 80px !important;
-    }
-    
-    /* 두 번째 버튼 (수령중) - 파란색 */
-    div[data-testid="stVerticalBlock"] > div:nth-child(3) .stButton > button {
-        background: #B8D4F0 !important;
-        color: #2C5282 !important;
-        height: 80px !important;
-        margin-bottom: 25px !important;
-    }
-    
-    /* 세 번째 버튼 (상품정보) - 초록색 */
-    div[data-testid="stVerticalBlock"] > div:nth-child(4) div:nth-child(1) .stButton > button {
-        background: #C6F6D5 !important;
-        color: #22543D !important;
-        height: 60px !important;
-        font-size: 16px !important;
-        padding: 20px 15px !important;
-    }
-    
-    /* 네 번째 버튼 (전화상담) - 분홍색 */
-    div[data-testid="stVerticalBlock"] > div:nth-child(4) div:nth-child(2) .stButton > button {
-        background: #FED7E2 !important;
-        color: #97266D !important;
-        height: 60px !important;
-        font-size: 16px !important;
-        padding: 20px 15px !important;
-    }
-    
-    /* 모바일 최적화 */
-    @media (max-width: 400px) {
-        .main-container {
-            padding: 15px;
-        }
-        
-        .stButton > button {
-            font-size: 18px !important;
-            padding: 20px 15px !important;
-        }
-        
-        .kb-star, .kb-text {
-            font-size: 28px;
-        }
-        
-        .main-title {
-            font-size: 20px;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# =================================
-# 메인 화면 (이미지처럼) =====
 def render_main_home():
-    # 메인 컨테이너
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
     # KB 헤더
@@ -587,32 +448,77 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    # 현재 연금 미수령 중 버튼
-    if st.button("현재 연금\n미수령 중", key="not_receiving_btn", use_container_width=True):
-        ss.flow = "survey"
-        ss.survey_type = "not_receiving"  # 미수령자 구분
+    # 직접 HTML 버튼으로 구현
+    st.markdown("""
+    <div onclick="document.getElementById('not_receiving_hidden').click()" 
+         style="background: #FFE4B5; color: #8B4513; padding: 25px 20px; margin: 15px 0; 
+                border-radius: 20px; text-align: center; font-size: 20px; font-weight: bold; 
+                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
+                transition: all 0.2s ease; height: 80px; display: flex; align-items: center; 
+                justify-content: center; white-space: pre-line;">
+        현재 연금<br>미수령 중
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 숨겨진 실제 버튼
+    if st.button("", key="not_receiving_hidden", help="미수령"):
+        st.session_state.flow = "survey"
+        st.session_state.survey_type = "not_receiving"
         st.rerun()
     
-    # 현재 연금 수령 중 버튼  
-    if st.button("현재 연금\n수령 중", key="receiving_btn", use_container_width=True):
-        ss.flow = "survey"
-        ss.survey_type = "receiving"  # 수령자 구분
+    # 수령 중 버튼
+    st.markdown("""
+    <div onclick="document.getElementById('receiving_hidden').click()" 
+         style="background: #B8D4F0; color: #2C5282; padding: 25px 20px; margin: 15px 0 25px 0; 
+                border-radius: 20px; text-align: center; font-size: 20px; font-weight: bold; 
+                cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
+                transition: all 0.2s ease; height: 80px; display: flex; align-items: center; 
+                justify-content: center; white-space: pre-line;">
+        현재 연금<br>수령 중
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("", key="receiving_hidden", help="수령중"):
+        st.session_state.flow = "survey"
+        st.session_state.survey_type = "receiving"
         st.rerun()
     
     # 하단 버튼들
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("상품\n정보", key="product_btn", use_container_width=True):
-            ss.flow = "product_info"
+        st.markdown("""
+        <div onclick="document.getElementById('product_hidden').click()" 
+             style="background: #C6F6D5; color: #22543D; padding: 20px 15px; margin: 15px 0; 
+                    border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
+                    cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
+                    transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
+                    justify-content: center; white-space: pre-line;">
+            상품<br>정보
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("", key="product_hidden", help="상품정보"):
+            st.session_state.flow = "product_info"
             st.rerun()
     
     with col2:
-        if st.button("전화\n상담", key="consultation_btn", use_container_width=True):
-            ss.flow = "consultation"
+        st.markdown("""
+        <div onclick="document.getElementById('consultation_hidden').click()" 
+             style="background: #FED7E2; color: #97266D; padding: 20px 15px; margin: 15px 0; 
+                    border-radius: 20px; text-align: center; font-size: 16px; font-weight: bold; 
+                    cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
+                    transition: all 0.2s ease; height: 60px; display: flex; align-items: center; 
+                    justify-content: center; white-space: pre-line;">
+            전화<br>상담
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("", key="consultation_hidden", help="전화상담"):
+            st.session_state.flow = "consultation"
             st.rerun()
     
-    st.markdown('</div>', unsafe_allow_html=True)  # main-container 끝
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # 공통 설문 문항
 QUESTIONS = [
