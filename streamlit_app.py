@@ -430,24 +430,19 @@ def render_final_screen(display_type: str, rec_df: pd.DataFrame):
     cards_html = '<div class="cards">' + ''.join(cards) + '</div>'
     st.markdown(cards_html, unsafe_allow_html=True)
 
-# =================================
-# 수정된 CSS - 더 강력한 선택자 사용
-# =================================
+# 기본 스타일 ========
 st.markdown("""
 <style>
-    /* 전체 앱 스타일 */
     .stApp {
-        background-color: #f8f9fa !important;
-        max-width: 400px !important;
-        margin: 0 auto !important;
+        background-color: #f8f9fa;
+        max-width: 400px;
+        margin: 0 auto;
     }
     
-    /* Streamlit 기본 요소들 숨기기 */
     .stDeployButton {display: none;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* 메인 컨테이너 */
     .main-container {
         background: #f8f9fa;
         padding: 20px;
@@ -455,7 +450,6 @@ st.markdown("""
         max-width: 350px;
     }
     
-    /* KB 로고 및 헤더 */
     .kb-header {
         text-align: center;
         margin-bottom: 40px;
@@ -497,127 +491,21 @@ st.markdown("""
         margin-top: 10px;
     }
     
-    /* 모든 버튼 기본 스타일 */
-    .element-container .stButton > button,
-    div[data-testid="element-container"] .stButton > button,
-    .stButton > button {
-        width: 100% !important;
-        border: none !important;
-        border-radius: 20px !important;
-        font-size: 20px !important;
-        font-weight: bold !important;
-        text-align: center !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease !important;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1) !important;
-        line-height: 1.4 !important;
-        padding: 25px 20px !important;
-        margin: 15px 0 !important;
-        white-space: pre-line !important;
-        height: 80px !important;
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.15) !important;
-    }
-    
-    /* 순서 기반 버튼 스타일링 - 더 구체적한 선택자 */
-    
-    /* 첫 번째 버튼 - 미수령 (주황색) */
-    .main-container > div:nth-of-type(2) .stButton > button {
-        background: linear-gradient(135deg, #FFE4B5, #FFDAB9) !important;
-        color: #8B4513 !important;
-        border: 2px solid #DEB887 !important;
-    }
-    
-    /* 두 번째 버튼 - 수령 중 (파란색) */
-    .main-container > div:nth-of-type(3) .stButton > button {
-        background: linear-gradient(135deg, #B8D4F0, #ADD8E6) !important;
-        color: #2C5282 !important;
-        border: 2px solid #87CEEB !important;
-    }
-    
-    /* 하단 버튼들 컨테이너 */
-    .main-container > div:nth-of-type(4) {
-        display: flex;
-        gap: 10px;
-    }
-    
-    /* 상품 정보 버튼 (왼쪽) */
-    .main-container > div:nth-of-type(4) > div:first-child .stButton > button {
-        background: linear-gradient(135deg, #C6F6D5, #B0E7C3) !important;
-        color: #22543D !important;
-        height: 60px !important;
-        font-size: 16px !important;
-        padding: 20px 15px !important;
-        border: 2px solid #9AE6B4 !important;
-    }
-    
-    /* 전화 상담 버튼 (오른쪽) */
-    .main-container > div:nth-of-type(4) > div:last-child .stButton > button {
-        background: linear-gradient(135deg, #FED7E2, #FBB6CE) !important;
-        color: #97266D !important;
-        height: 60px !important;
-        font-size: 16px !important;
-        padding: 20px 15px !important;
-        border: 2px solid #F687B3 !important;
-    }
-    
-    /* 컬럼 내부 버튼 스타일 */
-    div[data-testid="column"] .stButton > button {
-        height: 60px !important;
-        font-size: 16px !important;
-        padding: 20px 15px !important;
-    }
-    
-    /* 추가적인 강제 스타일링 */
-    .stApp [data-testid="stVerticalBlock"] > div:nth-child(2) .stButton > button {
-        background: #FFE4B5 !important;
-        color: #8B4513 !important;
-    }
-    
-    .stApp [data-testid="stVerticalBlock"] > div:nth-child(3) .stButton > button {
-        background: #B8D4F0 !important;
-        color: #2C5282 !important;
-    }
-    
-    /* 모바일 최적화 */
-    @media (max-width: 400px) {
-        .main-container {
-            padding: 15px;
-        }
-        
-        .stButton > button {
-            font-size: 18px !important;
-            padding: 20px 15px !important;
-        }
-        
-        .kb-star, .kb-text {
-            font-size: 28px;
-        }
-        
-        .main-title {
-            font-size: 20px;
-        }
+    /* 숨겨진 버튼들 */
+    button[data-testid*="hidden"] {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# =================================
 # 세션 상태 관리
-# =================================
 if "flow" not in st.session_state:
     st.session_state.flow = "home"
 
 if "button_clicked" not in st.session_state:
     st.session_state.button_clicked = None
 
-# =================================
-# 메인 화면 렌더링 함수
-# =================================
 def render_main_home():
-    # 버튼 클릭 처리
     if st.session_state.button_clicked:
         if st.session_state.button_clicked == "not_receiving":
             st.session_state.flow = "survey"
@@ -638,10 +526,8 @@ def render_main_home():
             st.session_state.button_clicked = None
             st.rerun()
     
-    # 메인 컨테이너
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
-    # KB 헤더
     st.markdown("""
     <div class="kb-header">
         <div class="kb-logo">
@@ -653,106 +539,132 @@ def render_main_home():
     </div>
     """, unsafe_allow_html=True)
     
-    # HTML 커스텀 버튼들
-    
     # 미수령 버튼 (주황색)
-    if st.button("", key="not_receiving_hidden", help="hidden"):
+    html_not_receiving = """
+    <div id="notReceivingButton" class="custom-button btn-orange" 
+         onclick="document.querySelector('button[data-testid*=hidden_not_receiving]').click()">
+        🔶 현재 연금 미수령 중
+    </div>
+    <style>
+    .custom-button {
+        width: 100%;
+        border: none;
+        border-radius: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        padding: 25px 20px;
+        margin: 15px 0;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid;
+    }
+    
+    .custom-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    
+    .btn-orange {
+        background: linear-gradient(135deg, #FFE4B5, #FFDAB9);
+        color: #8B4513;
+        border-color: #DEB887;
+    }
+    
+    .btn-orange:hover {
+        background: linear-gradient(135deg, #FFDAB9, #F4A460);
+    }
+    </style>
+    """
+    components.html(html_not_receiving, height=100)
+    
+    if st.button("", key="hidden_not_receiving"):
         st.session_state.button_clicked = "not_receiving"
         st.rerun()
     
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #FFE4B5, #FFDAB9);
-        color: #8B4513;
-        padding: 20px;
-        margin: 15px 0;
-        border-radius: 20px;
-        text-align: center;
-        font-size: 20px;
-        font-weight: bold;
-        cursor: pointer;
-        border: 2px solid #DEB887;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        transition: all 0.2s ease;
-    " onclick="document.querySelector('button[data-testid*=not_receiving_hidden]').click()">
-        🔶 현재 연금 미수령 중
-    </div>
-    """, unsafe_allow_html=True)
-    
     # 수령 중 버튼 (파란색)
-    if st.button("", key="receiving_hidden", help="hidden"):
-        st.session_state.button_clicked = "receiving"
-        st.rerun()
-        
-    st.markdown("""
-    <div style="
-        background: linear-gradient(135deg, #B8D4F0, #ADD8E6);
-        color: #2C5282;
-        padding: 20px;
-        margin: 15px 0;
-        border-radius: 20px;
-        text-align: center;
-        font-size: 20px;
-        font-weight: bold;
-        cursor: pointer;
-        border: 2px solid #87CEEB;
-        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-        transition: all 0.2s ease;
-    " onclick="document.querySelector('button[data-testid*=receiving_hidden]').click()">
+    html_receiving = """
+    <div id="receivingButton" class="custom-button btn-blue" 
+         onclick="document.querySelector('button[data-testid*=hidden_receiving]').click()">
         🔷 현재 연금 수령 중
     </div>
-    """, unsafe_allow_html=True)
+    <style>
+    .btn-blue {
+        background: linear-gradient(135deg, #B8D4F0, #ADD8E6);
+        color: #2C5282;
+        border-color: #87CEEB;
+    }
+    
+    .btn-blue:hover {
+        background: linear-gradient(135deg, #ADD8E6, #87CEEB);
+    }
+    </style>
+    """
+    components.html(html_receiving, height=100)
+    
+    if st.button("", key="hidden_receiving"):
+        st.session_state.button_clicked = "receiving"
+        st.rerun()
     
     # 하단 버튼들
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("", key="product_hidden", help="hidden"):
-            st.session_state.button_clicked = "product"
-            st.rerun()
-            
-        st.markdown("""
-        <div style="
+        html_product = """
+        <div id="productButton" class="custom-button btn-green" 
+             onclick="document.querySelector('button[data-testid*=hidden_product]').click()">
+            📋 상품정보
+        </div>
+        <style>
+        .btn-green {
             background: linear-gradient(135deg, #C6F6D5, #B0E7C3);
             color: #22543D;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 15px;
-            text-align: center;
+            border-color: #9AE6B4;
+            height: 60px;
             font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border: 2px solid #9AE6B4;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-        " onclick="document.querySelector('button[data-testid*=product_hidden]').click()">
-            📋 상품 정보
-        </div>
-        """, unsafe_allow_html=True)
+        }
+        
+        .btn-green:hover {
+            background: linear-gradient(135deg, #B0E7C3, #9AE6B4);
+        }
+        </style>
+        """
+        components.html(html_product, height=80)
+        
+        if st.button("", key="hidden_product"):
+            st.session_state.button_clicked = "product"
+            st.rerun()
     
     with col2:
-        if st.button("", key="consultation_hidden", help="hidden"):
-            st.session_state.button_clicked = "consultation"
-            st.rerun()
-            
-        st.markdown("""
-        <div style="
+        html_consultation = """
+        <div id="consultationButton" class="custom-button btn-pink" 
+             onclick="document.querySelector('button[data-testid*=hidden_consultation]').click()">
+            📞 전화상담
+        </div>
+        <style>
+        .btn-pink {
             background: linear-gradient(135deg, #FED7E2, #FBB6CE);
             color: #97266D;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 15px;
-            text-align: center;
+            border-color: #F687B3;
+            height: 60px;
             font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border: 2px solid #F687B3;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            transition: all 0.2s ease;
-        " onclick="document.querySelector('button[data-testid*=consultation_hidden]').click()">
-            📞 전화 상담
-        </div>
-        """, unsafe_allow_html=True)
+        }
+        
+        .btn-pink:hover {
+            background: linear-gradient(135deg, #FBB6CE, #F687B3);
+        }
+        </style>
+        """
+        components.html(html_consultation, height=80)
+        
+        if st.button("", key="hidden_consultation"):
+            st.session_state.button_clicked = "consultation"
+            st.rerun()
     
     st.markdown('</div>', unsafe_allow_html=True)
 
