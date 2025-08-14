@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import joblib
+import components
 
 # FAISS 설정 (기존과 동일)
 USE_FAISS = True
