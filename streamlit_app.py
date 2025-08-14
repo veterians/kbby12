@@ -1,34 +1,18 @@
-}
-</style>
-""", unsafe_allow_html=True)
 
-# =================================
-# UI 흐름
-# =================================
-st.title("💬 KB 시니어 연금 계산기")
+# KB 시니어 연금 계산기 - 완전한 기존 기능 + KB 디자인
+import os
+import numpy as np
+import pandas as pd
+import streamlit as st
+import joblib
 
-ss = st.session_state
-ss.setdefault("flow", "main")          # ← 기존 'choose' 대신 'main'으로 시작
-ss.setdefault("survey_type", None)     # 미수령/수령 구분 추가
-ss.setdefault("pred_amount", None)
-ss.setdefault("answers", {})
-ss.setdefault("prefill_survey", {})
-ss.setdefault("pred_label", None)
-ss.setdefault("tabnet_label", None)    # ← TabNet 금융유형(표시용)
-
-def reset_app_state(go: str | None = None):
-    """앱 상태 초기화. go가 'main'/'survey' 등이면 그 화면으로 이동."""
-    for k in [
-        "flow", "pred_amount", "answers", "prefill_survey", "pred_label",
-        "tabnet_label", "rec_df", "display_type", "risk_choice",
-        "show_reco", "show_sim", "sim_ready", "sim_inputs",
-        # 설문 위젯 키도 함께 초기화(충돌/잔상 방지)
-        *[kk for kk in st.session_state.keys() if str(kk).startswith("survey_")],
-    ]:
-        st.session_state.pop(k, None)
-    if go:
-        st.session_state["flow"] = go
-    st.rerun()
+# FAISS 설정 (기존과 동일)
+USE_FAISS = True
+try:
+    import faiss  # pip: faiss-cpu
+except Exception as e:
+    USE_FAISS = False
+    from sklearn.neighbors import NearestNeighbors
 
 # ===== 메인 화면 (이미지처럼) =====
 def render_main_home():
@@ -1204,3 +1188,20 @@ st.markdown("""
         .main-title {
             font-size: 20px;
         }
+}
+</style>
+""", unsafe_allow_html=True)
+
+# =================================
+# UI 흐름
+# =================================
+st.title("💬 KB 시니어 연금 계산기")
+
+ss = st.session_state
+ss.setdefault("flow", "main")          # ← 기존 'choose' 대신 'main'으로 시작
+ss.setdefault("survey_type", None)     # 미수령/수령 구분 추가
+ss.setdefault("pred_amount", None)
+ss.setdefault("answers", {})
+ss.setdefault("prefill_survey", {})
+ss.setdefault("pred_label", None)
+ss.setdefault("tabnet_label", None)    # ← TabNet 금융유형(표시용)
